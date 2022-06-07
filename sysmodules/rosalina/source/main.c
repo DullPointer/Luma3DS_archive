@@ -44,6 +44,7 @@
 #include "input_redirection.h"
 #include "minisoc.h"
 #include "draw.h"
+#include "bootdiag.h"
 
 #include "task_runner.h"
 #include "plugin.h"
@@ -89,13 +90,15 @@ void initSystem(void)
     mappableInit(0x10000000, 0x14000000);
 
     isN3DS = svcGetSystemInfo(&out, 0x10001, 0) == 0;
-
     svcGetSystemInfo(&out, 0x10000, 0x100);
     Luma_SharedConfig->hbldr_3dsx_tid = out == 0 ? HBLDR_DEFAULT_3DSX_TID : (u64)out;
     Luma_SharedConfig->use_hbldr = true;
 
     svcGetSystemInfo(&out, 0x10000, 0x101);
     menuCombo = out == 0 ? DEFAULT_MENU_COMBO : (u32)out;
+
+    svcGetSystemInfo(&out, 0x10000, 0x103);
+    lastNtpTzOffset = (s16)out;
 
     miscellaneousMenu.items[0].title = Luma_SharedConfig->hbldr_3dsx_tid == HBLDR_DEFAULT_3DSX_TID ?
         "Switch the hb. title to the current app." :
@@ -145,9 +148,6 @@ static void handleTermNotification(u32 notificationId)
 
 static void handleSleepNotification(u32 notificationId)
 {
-    // Quick dirty fix
-    Sleep__HandleNotification(notificationId);
-
     ptmSysmInit();
     s32 ackValue = ptmSysmGetNotificationAckValue(notificationId);
     switch (notificationId)
@@ -174,6 +174,9 @@ static void handleSleepNotification(u32 notificationId)
 
 static void handleShellNotification(u32 notificationId)
 {
+    // Quick dirty fix
+    Sleep__HandleNotification(notificationId);
+    
     if (notificationId == 0x213) {
         // Shell opened
         // Note that this notification is fired on system init    
@@ -343,6 +346,7 @@ int main(void)
     MyThread *menuThread = menuCreateThread();
     MyThread *taskRunnerThread = taskRunnerCreateThread();
     MyThread *errDispThread = errDispCreateThread();
+    bootdiagCreateThread();
 
     if (R_FAILED(ServiceManager_Run(services, notifications, NULL)))
         svcBreak(USERBREAK_PANIC);

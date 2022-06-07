@@ -41,6 +41,7 @@
 #include "plugin.h"
 #include "volume.h"
 #include "redshift/redshift.h"
+#include "menus/screen_filters.h"
 
 u32 menuCombo = 0;
 bool isHidInitialized = false;
@@ -161,9 +162,7 @@ u32 waitCombo(void)
 }
 
 static MyThread menuThread;
-static u8 ALIGN(8) menuThreadStack[0x1000];
-
-static u32 homeBtnPressed = 0;
+static u8 ALIGN(8) menuThreadStack[0x3000];
 
 static float batteryPercentage;
 static float batteryVoltage;
@@ -197,7 +196,7 @@ static Result menuUpdateMcuInfo(void)
         batteryPercentage = (u32)((batteryPercentage + 0.05f) * 10.0f) / 10.0f;
 
         // Round battery voltage to 0.01V
-        batteryVoltage = (5u * data[3]) / 256.0f;
+        batteryVoltage = 0.02f * data[3];
         batteryVoltage = (u32)((batteryVoltage + 0.005f) * 100.0f) / 100.0f;
     }
 
@@ -245,15 +244,13 @@ u32 menuCountItems(const Menu *menu)
 
 MyThread *menuCreateThread(void)
 {
-    if(R_FAILED(MyThread_Create(&menuThread, menuThreadMain, menuThreadStack, 0x1000, 52, CORE_SYSTEM)))
+    if(R_FAILED(MyThread_Create(&menuThread, menuThreadMain, menuThreadStack, 0x3000, 52, CORE_SYSTEM)))
         svcBreak(USERBREAK_PANIC);
     return &menuThread;
 }
 
 u32 menuCombo;
 u32 g_blockMenuOpen = 0;
-
-u32     DispWarningOnHome(void);
 
 void menuThreadMain(void)
 {
@@ -266,6 +263,16 @@ void menuThreadMain(void)
 
     while (!isServiceUsable("ac:u") || !isServiceUsable("hid:USER"))
         svcSleepThread(500 * 1000 * 1000LL);
+
+    s64 out;
+    svcGetSystemInfo(&out, 0x10000, 0x102);
+    screenFiltersCurrentTemperature = (int)(u32)out;
+    if (screenFiltersCurrentTemperature < 1000 || screenFiltersCurrentTemperature > 25100)
+        screenFiltersCurrentTemperature = 6500;
+
+    // Careful about race conditions here
+    if (screenFiltersCurrentTemperature != 6500)
+        ScreenFiltersMenu_SetCct(screenFiltersCurrentTemperature);
 
     hidInit(); // assume this doesn't fail
     isHidInitialized = true;
@@ -283,13 +290,9 @@ void menuThreadMain(void)
             openRosalina();
         }
 
-        // Check for home button on O3DS Mode3 with plugin loaded
-        if (homeBtnPressed != 0)
-        {
-            if (DispWarningOnHome())
-                svcKernelSetState(7); ///< reboot is fine since exiting a mode3 game reboot anyway
-
-            homeBtnPressed = 0;
+        if (saveSettingsRequest) {
+            SaveSettings();
+            saveSettingsRequest = false;
         }
     }
 }
