@@ -45,7 +45,7 @@ typedef union {
 static u16 g_c[0x600];
 static Pixel g_px[0x400];
 
-int screenFiltersCurrentTemperature = 6500;
+int screenFiltersCurrentTemperature = -1;
 
 // from redshift.c
 extern bool redshiftFilterSelected;
@@ -143,7 +143,7 @@ void ScreenFiltersMenu_Set##name(void)\
 
 bool ScreenFiltersMenu_RestoreCct(void)
 {
-    if (screenFiltersCurrentTemperature == 6500 || redshiftFilterSelected)
+    if (screenFiltersCurrentTemperature != -1 || redshiftFilterSelected)
     {
         // Wait for GSP to restore the CCT table
         while (GPU_FB_TOP_COL_LUT_ELEM != g_px[0].raw)

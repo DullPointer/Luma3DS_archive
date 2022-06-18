@@ -46,8 +46,8 @@ CfgData configData;
 ConfigurationStatus needConfig;
 static CfgData oldConfig;
 
-static CfgDataMcu configDataMcu;
-static_assert(sizeof(CfgDataMcu) > 0, "wrong data size");
+// // static CfgDataMcu configDataMcu;
+// // static_assert(sizeof(CfgDataMcu) > 0, "wrong data size");
 
 // INI parsing
 // ===========================================================
@@ -451,74 +451,76 @@ static bool writeLumaIniConfig(void)
 
 // ===========================================================
 
-static void writeConfigMcu(void)
-{
-    u8 data[sizeof(CfgDataMcu)];
+// // static void writeConfigMcu(void)
+// // {
+// //     u8 data[sizeof(CfgDataMcu)];
 
-    // Set Luma version
-    configDataMcu.lumaVersion = MAKE_LUMA_VERSION_MCU(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
+// //     // Set Luma version
+// //     configDataMcu.lumaVersion = MAKE_LUMA_VERSION_MCU(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
 
-    // Set bootconfig from CfgData
-    configDataMcu.bootCfg = configData.bootConfig;
+// //     // Set bootconfig from CfgData
+// //     configDataMcu.bootCfg = configData.bootConfig;
 
-    memcpy(data, &configDataMcu, sizeof(CfgDataMcu));
+// //     memcpy(data, &configDataMcu, sizeof(CfgDataMcu));
 
-    // Fix checksum
-    u8 checksum = 0;
-    for (u32 i = 0; i < sizeof(CfgDataMcu) - 1; i++)
-        checksum += data[i];
-    checksum = ~checksum;
-    data[sizeof(CfgDataMcu) - 1] = checksum;
-    configDataMcu.checksum = checksum;
+// //     // Fix checksum
+// //     u8 checksum = 0;
+// //     for (u32 i = 0; i < sizeof(CfgDataMcu) - 1; i++)
+// //         checksum += data[i];
+// //     checksum = ~checksum;
+// //     data[sizeof(CfgDataMcu) - 1] = checksum;
+// //     configDataMcu.checksum = checksum;
 
-    I2C_writeReg(I2C_DEV_MCU, 0x60, 200 - sizeof(CfgDataMcu));
-    I2C_writeRegBuf(I2C_DEV_MCU, 0x61, data, sizeof(CfgDataMcu));
-}
+// //     I2C_writeReg(I2C_DEV_MCU, 0x60, 200 - sizeof(CfgDataMcu));
+// //     I2C_writeRegBuf(I2C_DEV_MCU, 0x61, data, sizeof(CfgDataMcu));
+// // }
 
-static bool readConfigMcu(void)
-{
-    u8 data[sizeof(CfgDataMcu)];
-    u16 curVer = MAKE_LUMA_VERSION_MCU(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
+// // static bool readConfigMcu(void)
+// // {
+// //     u8 data[sizeof(CfgDataMcu)];
+// //     u16 curVer = MAKE_LUMA_VERSION_MCU(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
 
-    // Select free reg id, then access the data regs
-    I2C_writeReg(I2C_DEV_MCU, 0x60, 200 - sizeof(CfgDataMcu));
-    I2C_readRegBuf(I2C_DEV_MCU, 0x61, data, sizeof(CfgDataMcu));
-    memcpy(&configDataMcu, data, sizeof(CfgDataMcu));
+// //     // Select free reg id, then access the data regs
+// //     I2C_writeReg(I2C_DEV_MCU, 0x60, 200 - sizeof(CfgDataMcu));
+// //     I2C_readRegBuf(I2C_DEV_MCU, 0x61, data, sizeof(CfgDataMcu));
+// //     memcpy(&configDataMcu, data, sizeof(CfgDataMcu));
 
-    u8 checksum = 0;
-    for (u32 i = 0; i < sizeof(CfgDataMcu) - 1; i++)
-        checksum += data[i];
-    checksum = ~checksum;
+// //     u8 checksum = 0;
+// //     for (u32 i = 0; i < sizeof(CfgDataMcu) - 1; i++)
+// //         checksum += data[i];
+// //     checksum = ~checksum;
 
-    if (checksum != configDataMcu.checksum || configDataMcu.lumaVersion < MAKE_LUMA_VERSION_MCU(10, 3, 0))
-    {
-        // Invalid data stored in MCU...
-        memset(&configDataMcu, 0, sizeof(CfgDataMcu));
-        configData.bootConfig = 0;
-        // Perform upgrade process (ignoring failures)
-        doLumaUpgradeProcess();
-        writeConfigMcu();
+// //     if (checksum != configDataMcu.checksum || configDataMcu.lumaVersion < MAKE_LUMA_VERSION_MCU(10, 3, 0))
+// //     {
+// //         // Invalid data stored in MCU...
+// //         memset(&configDataMcu, 0, sizeof(CfgDataMcu));
+// //         configData.bootConfig = 0;
+// //         // Perform upgrade process (ignoring failures)
+// //         doLumaUpgradeProcess();
+// //         writeConfigMcu();
 
-        return false;
-    }
+// //         return false;
+// //     }
 
-    if (configDataMcu.lumaVersion < curVer)
-    {
-        // Perform upgrade process (ignoring failures)
-        doLumaUpgradeProcess();
-        writeConfigMcu();
-    }
+// //     if (configDataMcu.lumaVersion < curVer)
+// //     {
+// //         // Perform upgrade process (ignoring failures)
+// //         doLumaUpgradeProcess();
+// //         writeConfigMcu();
+// //     }
 
-    return true;
-}
+// //     return true;
+// // }
 
 bool readConfig(void)
 {
-    bool retMcu, ret;
+    bool ret;
+    // // bool retMcu, ret;
 
-    retMcu = readConfigMcu();
+    // // retMcu = readConfigMcu();
     ret = readLumaIniConfig();
-    if(!retMcu || !ret ||
+    if(!ret ||
+    // // if(!retMcu || !ret ||
        configData.formatVersionMajor != CONFIG_VERSIONMAJOR ||
        configData.formatVersionMinor != CONFIG_VERSIONMINOR)
     {
@@ -535,7 +537,7 @@ bool readConfig(void)
     else
         ret = true;
 
-    configData.bootConfig = configDataMcu.bootCfg;
+    // // configData.bootConfig = configDataMcu.bootCfg;
     oldConfig = configData;
 
     return ret;
@@ -543,22 +545,23 @@ bool readConfig(void)
 
 void writeConfig(bool isConfigOptions)
 {
-    bool updateMcu, updateIni;
+    bool updateIni;
+    // // bool updateMcu, updateIni;
 
     if (needConfig == CREATE_CONFIGURATION)
     {
-        updateMcu = !isConfigOptions; // We've already committed it once (if it wasn't initialized)
+        // // updateMcu = !isConfigOptions; // We've already committed it once (if it wasn't initialized)
         updateIni = isConfigOptions;
         needConfig = MODIFY_CONFIGURATION;
     }
     else
     {
-        updateMcu = !isConfigOptions && configData.bootConfig != oldConfig.bootConfig;
+        // // updateMcu = !isConfigOptions && configData.bootConfig != oldConfig.bootConfig;
         updateIni = isConfigOptions && (configData.config != oldConfig.config || configData.multiConfig != oldConfig.multiConfig);
     }
 
-    if (updateMcu)
-        writeConfigMcu();
+    // // if (updateMcu)
+    // //     writeConfigMcu();
 
     if(updateIni && !writeLumaIniConfig())
         error("Error writing the configuration file");
