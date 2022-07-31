@@ -184,9 +184,25 @@ static void handleShellNotification(u32 notificationId)
             Redshift_SuppressLeds();
         }
 
-        if(nightLightSettingsRead && !ScreenFiltersMenu_RestoreCct())
+        if(!ScreenFiltersMenu_RestoreCct()) // first try reapplying manually selected screen filter/redshift, will return false on system init
         { 
-            Redshift_ApplyNightLightSettings();
+            if(nightLightSettingsRead) // then apply Night/Light as priority if it exists
+            {
+                Redshift_ApplyNightLightSettings();
+            }
+            else // else use official Luma config for screen temperature
+            {
+                s64 out;
+                svcGetSystemInfo(&out, 0x10000, 0x102);
+                screenFiltersCurrentTemperature = (int)(u32)out;
+                if (screenFiltersCurrentTemperature < 1000 || screenFiltersCurrentTemperature > 25100)
+                    screenFiltersCurrentTemperature = 6500;
+
+                if (screenFiltersCurrentTemperature != 6500)
+                {
+                    if(Redshift_LcdsAvailable()) ScreenFiltersMenu_SetCct(screenFiltersCurrentTemperature);
+                }
+            }
         }
         
         menuShouldExit = false;

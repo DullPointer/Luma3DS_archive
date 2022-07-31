@@ -264,16 +264,6 @@ void menuThreadMain(void)
     while (!isServiceUsable("ac:u") || !isServiceUsable("hid:USER"))
         svcSleepThread(500 * 1000 * 1000LL);
 
-    // // s64 out;
-    // // svcGetSystemInfo(&out, 0x10000, 0x102);
-    // // screenFiltersCurrentTemperature = (int)(u32)out;
-    // // if (screenFiltersCurrentTemperature < 1000 || screenFiltersCurrentTemperature > 25100)
-    // //     screenFiltersCurrentTemperature = 6500;
-
-    // // // Careful about race conditions here
-    // // if (screenFiltersCurrentTemperature != 6500)
-    // //     ScreenFiltersMenu_SetCct(screenFiltersCurrentTemperature);
-
     hidInit(); // assume this doesn't fail
     isHidInitialized = true;
 

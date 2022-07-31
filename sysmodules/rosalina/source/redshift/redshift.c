@@ -182,7 +182,7 @@ void Redshift_EditableFilter(u8 filterNo)
             cs.brightness = screens[0].brightness;
             IFile_Close(&file);
             redshiftFilterSelected = filterNo == 0 ? true : false;
-            screenFiltersCurrentTemperature = -1;
+            screenFiltersCurrentTemperature = 6500;
         }
     }
     
@@ -549,8 +549,8 @@ void Redshift_UpdateNightLightStatuses(void)
     lightModeActive ? "[Light" : "[Night", 
     (!s_nightLight.use_nightMode || nightLightOverride) ? " Single Mode]" : " Switch Mode]");
 
-    sprintf(nightLightMainMenuBuf, "Screen filters%s", (nightLightSettingsRead && !redshiftFilterSelected && screenFiltersCurrentTemperature == -1) ? statusBuf : "...");
-    sprintf(nightLightSubMenuBuf, "Night/Light Config%s", (nightLightSettingsRead && !redshiftFilterSelected && screenFiltersCurrentTemperature == -1) ? statusBuf : "");
+    sprintf(nightLightMainMenuBuf, "Screen filters%s", (nightLightSettingsRead && !redshiftFilterSelected && screenFiltersCurrentTemperature == 6500) ? statusBuf : "...");
+    sprintf(nightLightSubMenuBuf, "Night/Light Config%s", (nightLightSettingsRead && !redshiftFilterSelected && screenFiltersCurrentTemperature == 6500) ? statusBuf : "");
 
     rosalinaMenu.items[0].title = nightLightMainMenuBuf;
     screenFiltersMenu.items[13].title = nightLightSubMenuBuf;
